@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:WFR1w7YwGlQTvoXDkTGv6D1n@etna.liara.cloud:30801/condescending_zhukovsky"
+}
+
+model user {
+  phone                    String           @id @db.VarChar(50)
+  name                     String?          @default("")
+  adress                   String?          @default("")
+  instagram                String?          @default("")
+  money                    String           @default("0")
+  walletNumber             String?          @default("")
+  walletHolder             String?          @default("")
+  email                    String?          @default("")
+  password                 String?          @default("")
+  nationalCode             Int?
+  PercentOfReduceSendPrice Float            @default(100)
+  insertDate               DateTime         @default(now())
+  isSeller                 Boolean
+  authorizedUser           authorizedUser?
+  blockUser                blockUser?
+  orderProduct             orderProduct[]
+  orders                   orders[]
+  products                 products[]
+  roles                    roles[]
+  sellerIncome             sellerIncome[]
+  ticket                   ticket[]
+  ticket_Message           ticket_Message[]
+  trasactions              trasactions[]
+}
+
+model roles {
+  id     String @id @default(uuid())
+  userId String
+  role   Int
+  user   user   @relation(fields: [userId], references: [phone], onDelete: Cascade)
+
+  @@index([userId], map: "roles_userId_fkey")
+}
+
+model products {
+  id           Int            @id @default(autoincrement())
+  userId       String         @db.VarChar(50)
+  name         String
+  price        Int
+  photo        String?
+  Count        Int
+  Describe     String         @db.Text
+  SendPrice    Int?
+  minCount     Int?
+  impDesc      String?
+  canSell      Boolean?
+  insertDate   DateTime       @default(now())
+  orderProduct orderProduct[]
+  user         user           @relation(fields: [userId], references: [phone], onDelete: NoAction)
+
+  @@index([userId], map: "products_userId_fkey")
+}
+
+model orders {
+  id           String  @id @default(uuid())
+  userId       String
+  receiverName String
+  adress       String
+  trackCode    String?
+  postalCode   String?
+  email        String?
+  Describe     String?
+  canCancel    Boolean @default(true)
+  canFinish    Boolean @default(false)
+  canNoReceive Boolean @default(false)
+  NoReceive    Boolean @default(false)
+  phone        String
+  accepted     Boolean @default(true)
+  payed        Boolean @default(false)
+  payStatus    String  @default("waiting")
+
+  finish     String  @default("waiting")
+  sellAccept Boolean @default(false)
+
+  insertTime       DateTime       @default(now())
+  postTrackingCode String?
+  jedgement        judgement?
+  orderProduct     orderProduct[]
+  user             user           @relation(fields: [userId], references: [phone], onDelete: Cascade)
+  orderTiming      orderTiming?
+  tickets          ticket[]
+  trasactions      trasactions?
+
+  @@index([userId], map: "orders_userId_fkey")
+}
+
+model fee {
+  id  Int @id
+  fee Float 
+}
+
+model ticket {
+  id             String           @id @default(uuid())
+  name           String
+  type           String
+  userId         String
+  insertTime     DateTime         @default(now())
+  ordersId       String?
+  orders         orders?          @relation(fields: [ordersId], references: [id])
+  user           user             @relation(fields: [userId], references: [phone], onDelete: Cascade)
+  ticket_Message ticket_Message[]
+
+  @@index([ordersId], map: "ticket_ordersId_fkey")
+  @@index([userId], map: "ticket_userId_fkey")
+}
+
+model judgement {
+  id            String   @id @default(nanoid())
+  reqBuyer      Boolean
+  title         String
+  buyerId       String
+  buyerMessage  String?
+  buyerFiles    String?
+  sellerId      String
+  sellerMessage String?
+  sellerFiles   String?
+  adminMessage  String?
+  adminFiles    String?
+  finalJudge    String   @default("waiting")
+  insertTime    DateTime @default(now())
+  order         orders   @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model blog {
+  id           String   @id @default(uuid())
+  title        String
+  miniDescribe String
+  photo        String
+  time         String
+  insertDate   DateTime @default(now())
+  text         String   @db.Text
+  tagId        String
+  tag          blogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@index([tagId], map: "blog_tagId_fkey")
+}
+
+model trasactions {
+  userId     String
+  orderId    String   @id
+  insertDate DateTime @default(now())
+  ref_id     String?
+  card_hash  String
+  card_pan   String
+  amount     Int
+  authority  String
+  fee        Int
+  order      orders   @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user       user     @relation(fields: [userId], references: [phone], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId], map: "trasactions_userId_fkey")
+}
+
+model setting {
+  id    Int    @id @default(autoincrement())
+  value String @db.VarChar(100)
+}
+
+model advertisement {
+  id                 String               @id @default(nanoid())
+  text               String
+  link               String?
+  title              String?
+  Photo              String?
+  Start              DateTime
+  End                DateTime
+  advertisement_seen advertisement_seen[]
+}
+
+model advertisement_seen {
+  id            String        @id @default(nanoid())
+  adId          String
+  userId        String
+  InsertDate    DateTime      @default(now())
+  advertisement advertisement @relation(fields: [adId], references: [id], onDelete: Cascade, map: "Advertisement_Seen_adId_fkey")
+
+  @@index([adId], map: "Advertisement_Seen_adId_fkey")
+}
+
+model authorizedUser {
+  phone String @id
+  user  user   @relation(fields: [phone], references: [phone], onDelete: Cascade, map: "AuthorizedUser_phone_fkey")
+}
+
+model blockUser {
+  phone String @id @db.VarChar(50)
+  user  user   @relation(fields: [phone], references: [phone], onDelete: Cascade, map: "blockUser_phone_fkey")
+}
+
+model blogTag {
+  id   String @id @default(nanoid())
+  name String
+  blog blog[]
+}
+
+model logUser {
+  id         String   @id @default(nanoid())
+  email      String
+  link       String
+  insertTime DateTime @default(now())
+}
+
+model orderProduct {
+  id        String   @id @default(nanoid())
+  orderId   String
+  productId Int
+  userId    String
+  price     Int
+  count     Int
+  fee       Int      @default(10)
+  sendPrice Int
+  orders    orders   @relation(fields: [orderId], references: [id], onDelete: NoAction, map: "orderProduct_orderId_fkey")
+  products  products @relation(fields: [productId], references: [id], onDelete: NoAction, map: "orderProduct_productId_fkey")
+  user      user     @relation(fields: [userId], references: [phone], onDelete: NoAction, map: "orderProduct_userId_fkey")
+
+  @@index([orderId], map: "orderProduct_orderId_fkey")
+  @@index([productId], map: "orderProduct_productId_fkey")
+  @@index([userId], map: "orderProduct_userId_fkey")
+}
+
+model orderTiming {
+  id         String    @id @default(nanoid())
+  create     DateTime?
+  cancel     DateTime?
+  autoCancel DateTime?
+  noRecieve  DateTime?
+  finish     DateTime?
+  accept     DateTime?
+  send       DateTime?
+  orders     orders    @relation(fields: [id], references: [id], onDelete: Cascade, map: "orderTiming_id_fkey")
+}
+
+model routineLog {
+  id                   DateTime @id @default(now())
+  AllMoney             Decimal  @db.Decimal(20, 0)
+  payedMoney           Decimal  @db.Decimal(20, 0)
+  WpayedMoney          Decimal  @db.Decimal(20, 0)
+  inPrviderWallet      Decimal  @db.Decimal(20, 0)
+  inWallets            Decimal  @db.Decimal(20, 0)
+  pureMoney            Decimal  @db.Decimal(20, 0)
+  userCounr            Decimal  @db.Decimal(20, 0)
+  fialedOrders         Decimal  @db.Decimal(20, 0)
+  successOrders        Decimal  @db.Decimal(20, 0)
+  waitingAcceptOrders  Decimal  @db.Decimal(20, 0)
+  waitingPeymentOrders Decimal  @db.Decimal(20, 0)
+}
+
+model sellerIncome {
+  id            String    @id @default(nanoid())
+  userId        String
+  accept        Boolean   @default(false)
+  amount        Decimal   @db.Decimal(20, 0)
+  status        String    @default("waiting")
+  statusMessage String?
+  insertDate    DateTime  @default(now())
+  payDate       DateTime?
+  payCode       String?
+  wallet        String
+  user          user      @relation(fields: [userId], references: [phone], onDelete: Cascade, map: "SellerIncome_userId_fkey")
+
+  @@index([userId], map: "SellerIncome_userId_fkey")
+}
+
+model ticket_Message {
+  id         String   @id @default(nanoid())
+  text       String
+  insertDate DateTime @default(now())
+  userId     String
+  file       String?
+  ticketId   String
+  isSender   Boolean  @default(true)
+  ticket     ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade, map: "ticket_Message_ticketId_fkey")
+  user       user     @relation(fields: [userId], references: [phone], onDelete: Cascade, map: "ticket_Message_userId_fkey")
+
+  @@index([ticketId], map: "ticket_Message_ticketId_fkey")
+  @@index([userId], map: "ticket_Message_userId_fkey")
+}
+
+model userEmailsSended {
+  id         String   @id @default(nanoid())
+  userId     String
+  email      String
+  content    String   @db.Text
+  insertTime DateTime @default(now())
+}
